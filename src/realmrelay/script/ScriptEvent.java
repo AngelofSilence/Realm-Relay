@@ -28,7 +28,7 @@ import realmrelay.data.Tile;
 import realmrelay.packets.Packet;
 
 
-public abstract class ScriptEvent {
+public class ScriptEvent {
 	
 	protected final User user;
 	
@@ -148,7 +148,7 @@ public abstract class ScriptEvent {
 			}
 			return null;
 		}
-		return GETXmlParse.tileMap.get(searchterm.toString());
+		return GETXmlParse.tileMap.get(searchterm.toString().toUpperCase());
 	}
 	
 	public Object findItem(Object searchterm) {
@@ -162,7 +162,7 @@ public abstract class ScriptEvent {
 			}
 			return null;
 		}
-		return GETXmlParse.itemMap.get(searchterm.toString());
+		return GETXmlParse.itemMap.get(searchterm.toString().toUpperCase());
 	}
 	
 	public Object findObject(Object searchterm) {
@@ -176,11 +176,11 @@ public abstract class ScriptEvent {
 			}
 			return null;
 		}
-		return GETXmlParse.objectMap.get(searchterm.toString());
+		return GETXmlParse.objectMap.get(searchterm.toString().toUpperCase());
 	}
 	
 	public byte findPacketId(String name) {
-		Integer id = (Integer) GETXmlParse.packetMap.get(name);
+		Integer id = (Integer) GETXmlParse.packetMap.get(name.toUpperCase());
 		if (id == null) {
 			return -1;
 		}
