@@ -13,10 +13,10 @@ import realmrelay.GETXmlParse;
 import realmrelay.ROTMGRelay;
 import realmrelay.User;
 import realmrelay.data.BitmapData;
+import realmrelay.data.Entity;
 import realmrelay.data.Item;
 import realmrelay.data.Location;
 import realmrelay.data.LocationRecord;
-import realmrelay.data.ObjectData;
 import realmrelay.data.SlotObject;
 import realmrelay.data.StatData;
 import realmrelay.data.Status;
@@ -89,8 +89,8 @@ public abstract class ScriptEvent {
 		return new LocationRecord();
 	}
 	
-	public ObjectData createObjectData() {
-		return new ObjectData();
+	public Entity createEntity() {
+		return new Entity();
 	}
 	
 	/**
@@ -133,28 +133,24 @@ public abstract class ScriptEvent {
 		ROTMGRelay.echo(message);
 	}
 	
+	public Object findItem(String name) {
+		return GETXmlParse.itemMap.get(name);
+	}
+	
 	public byte findPacketId(String name) {
-		Integer id = GETXmlParse.packetMap.get(name);
+		Integer id = (Integer) GETXmlParse.packetMap.get(name);
 		if (id == null) {
 			return -1;
 		}
 		return id.byteValue();
 	}
 	
-	public int findObjectType(String name) {
-		Integer type = GETXmlParse.objectMap.get(name);
-		if (type == null) {
-			return -1;
-		}
-		return type;
+	public Object findObject(String name) {
+		return GETXmlParse.objectMap.get(name);
 	}
 	
-	public int findTileType(String name) {
-		Integer type = GETXmlParse.tileMap.get(name);
-		if (type == null) {
-			return -1;
-		}
-		return type;
+	public Object findTileType(String name) {
+		return GETXmlParse.tileMap.get(name);
 	}
 	
 	public Object getGlobal(String var) {
