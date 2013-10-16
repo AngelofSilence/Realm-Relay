@@ -14,15 +14,19 @@ import org.w3c.dom.Element;
 import realmrelay.data.GroundData;
 import realmrelay.data.ItemData;
 import realmrelay.data.ObjectData;
+import realmrelay.data.ProjectileData;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class GETXmlParse {
 
-	public static final Map<String, Object> itemMap = new HashMap<String, Object>();
-	public static final Map<String, Object> objectMap = new HashMap<String, Object>();
-	public static final Map<String, Object> tileMap = new HashMap<String, Object>();
+	public static final Map<String, ItemData> itemMap = new HashMap<String, ItemData>();
+	public static final Map<Integer, ItemData> itemMap2 = new HashMap<Integer, ItemData>();
+	public static final Map<String, ObjectData> objectMap = new HashMap<String, ObjectData>();
+	public static final Map<Integer, ObjectData> objectMap2 = new HashMap<Integer, ObjectData>();
+	public static final Map<String, GroundData> tileMap = new HashMap<String, GroundData>();
+	public static final Map<Integer, GroundData> tileMap2 = new HashMap<Integer, GroundData>();
 	public static final Map<String, Object> packetMap = new HashMap<String, Object>();
 	
 	private static final String USER_AGENT = "Mozilla/5.0";
@@ -32,13 +36,13 @@ public class GETXmlParse {
 	private static final int XML_TILES = 3;
 
 	public static void parseXMLData() throws Exception {
-		parseXMLtoMap("https://raw.github.com/DeVoidCoder/Realm-Relay/master/XML/Objects.xml", objectMap, "Object", XML_OBJECTS);
-		parseXMLtoMap("https://raw.github.com/DeVoidCoder/Realm-Relay/master/XML/Tile.xml", tileMap, "Ground", XML_TILES);
-		parseXMLtoMap("https://raw.github.com/DeVoidCoder/Realm-Relay/master/XML/Packets.xml", packetMap, "Packet", XML_PACKETS);
-		parseXMLtoMap("https://raw.github.com/DeVoidCoder/Realm-Relay/master/XML/Items.xml", itemMap, "Object", XML_ITEMS);
+		parseXMLtoMap("https://raw.github.com/DeVoidCoder/Realm-Relay/master/xml/objects.xml", "Object", XML_OBJECTS);
+		parseXMLtoMap("https://raw.github.com/DeVoidCoder/Realm-Relay/master/xml/tiles.xml", "Ground", XML_TILES);
+		parseXMLtoMap("https://raw.github.com/DeVoidCoder/Realm-Relay/master/xml/packets.xml", "Packet", XML_PACKETS);
+		parseXMLtoMap("https://raw.github.com/DeVoidCoder/Realm-Relay/master/xml/items.xml", "Object", XML_ITEMS);
 	}
 
-	private static void parseXMLtoMap(String url, Map<String, Object> map, String elementTagName, int xmlType) {
+	private static void parseXMLtoMap(String url, String elementTagName, int xmlType) {
 		try {
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -51,23 +55,19 @@ public class GETXmlParse {
 			// add request header
 			con.setRequestProperty("User-Agent", USER_AGENT);
 
-			/*int responseCode = con.getResponseCode();
-			System.out.println("\nSending 'GET' request to URL : " + url);
-			System.out.println("Response Code : " + responseCode);*/
-
 			InputStream in = con.getInputStream();
 			Document doc = dBuilder.parse(in);
 			in.close();
 			doc.getDocumentElement().normalize();
 			
 			NodeList nodeList = doc.getElementsByTagName(elementTagName);
-			xmlToMap(nodeList, map, xmlType);
+			xmlToMap(nodeList, xmlType);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static void xmlToMap(NodeList node, Map<String, Object> map, int xmlType) {
+	private static void xmlToMap(NodeList node, int xmlType) {
 		for (int j = 0; j < node.getLength(); j++) {
 			Element el = (Element) node.item(j);
 			// convert names with lowercase letters and spaces to the correct format
@@ -96,6 +96,7 @@ public class GETXmlParse {
 					groundData.speed = Float.parseFloat(nodeList.item(0).getTextContent());
 				}
 				tileMap.put(idtemp, groundData);
+				tileMap2.put(groundData.type, groundData);
 			} else if (xmlType == XML_ITEMS) {
 				ItemData itemData = new ItemData();
 				itemData.id = el.getAttribute("id");
@@ -149,7 +150,31 @@ public class GETXmlParse {
 				if ((nodeList = el.getElementsByTagName("NumProjectiles")).getLength() > 0) {
 					itemData.numProjectiles = Integer.parseInt(nodeList.item(0).getTextContent());
 				}
+				if ((nodeList = el.getElementsByTagName("Projectile")).getLength() > 0) {
+					for (int i = 0; i < nodeList.getLength(); i++) {
+						Element projectile = (Element) nodeList.item(i);
+						ProjectileData projectileData = new ProjectileData();
+						NodeList nl = null;
+						if ((nl = projectile.getElementsByTagName("ObjectId")).getLength() > 0) {
+							projectileData.objectId = nl.item(0).getTextContent();
+						}
+						if ((nl = projectile.getElementsByTagName("Speed")).getLength() > 0) {
+							projectileData.speed = Float.parseFloat(nl.item(0).getTextContent());
+						}
+						if ((nl = projectile.getElementsByTagName("MaxDamage")).getLength() > 0) {
+							projectileData.maxDamage = Integer.parseInt(nl.item(0).getTextContent());
+						}
+						if ((nl = projectile.getElementsByTagName("MinDamage")).getLength() > 0) {
+							projectileData.minDamage = Integer.parseInt(nl.item(0).getTextContent());
+						}
+						if ((nl = projectile.getElementsByTagName("LifetimeMS")).getLength() > 0) {
+							projectileData.lifetimeMS = Integer.parseInt(nl.item(0).getTextContent());
+						}
+						itemData.projectiles.add(projectileData);
+					}
+				}
 				itemMap.put(idtemp, itemData);
+				itemMap2.put(itemData.type, itemData);
 			} else if (xmlType == XML_OBJECTS) {
 				ObjectData objectData = new ObjectData();
 				objectData.id = el.getAttribute("id");
@@ -219,10 +244,11 @@ public class GETXmlParse {
 					objectData.z = Float.parseFloat(nodeList.item(0).getTextContent());
 				}
 				objectMap.put(idtemp, objectData);
+				objectMap2.put(objectData.type, objectData);
 			} else if (xmlType == XML_PACKETS) {
 				String typetemp = el.getAttribute("type");
 				int ParsedTileType = Integer.decode(typetemp);
-				map.put(idtemp, ParsedTileType);
+				packetMap.put(idtemp, ParsedTileType);
 			}
 		}
 	}
